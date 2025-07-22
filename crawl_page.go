@@ -7,7 +7,16 @@ import (
 )
 
 func (cfg *config) crawlPage(rawCurrentURL string) {
-	defer cfg.wg.Done()
+
+	cfg.concurrencyControl <- struct{}{}
+	defer func() {
+		<-cfg.concurrencyControl
+		cfg.wg.Done()
+	}()
+
+	if cfg.pagesLens() >= cfg.maxPages {
+		return
+	}
 
 	parsedURL, err := url.Parse(rawCurrentURL)
 	if err != nil {
@@ -26,26 +35,27 @@ func (cfg *config) crawlPage(rawCurrentURL string) {
 	}
 
 	if !cfg.addPageVisit(currentURL) {
-		log.Printf("already visited url: %s", currentURL)
+		// log.Printf("already visited url: %s", currentURL)
 		return
 	}
 
-	fmt.Println(currentURL)
+	// fmt.Println(currentURL)
 
-	data, err := getHTML(currentURL)
+	htmlData, err := getHTML(currentURL)
 	if err != nil {
-		fmt.Printf("error getting getting html from url: %v", err)
+		log.Printf("error getting getting html from url: %v", err)
 		return
 	}
 
-	urls, err := getURLsFromHTML(data, cfg.baseURL)
+	urls, err := getURLsFromHTML(htmlData, cfg.baseURL)
 	if err != nil {
 		log.Printf("error reading urls from html: %v", err)
 		return
 	}
 
-	for _, url := range urls {
+	for _, nextURL := range urls {
 		cfg.wg.Add(1)
-		go cfg.crawlPage(url)
+		// log.Printf("Spawning crawl for %s", nextURL)
+		go cfg.crawlPage(nextURL)
 	}
 }

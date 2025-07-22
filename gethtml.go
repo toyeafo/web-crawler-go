@@ -15,7 +15,7 @@ func getHTML(rawURL string) (string, error) {
 	defer res.Body.Close()
 
 	if res.StatusCode > 399 {
-		return "", fmt.Errorf("invalid request")
+		return "", fmt.Errorf("invalid request: %s", res.Status)
 	}
 
 	if !strings.Contains(res.Header.Get("content-type"), "text/html") {
