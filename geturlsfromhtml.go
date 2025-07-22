@@ -9,11 +9,7 @@ import (
 	"golang.org/x/net/html/atom"
 )
 
-func getURLsFromHTML(htmlBody, rawBaseURL string) ([]string, error) {
-	base, err := url.Parse(rawBaseURL)
-	if err != nil {
-		return []string{}, fmt.Errorf("invalid base URL: %w", err)
-	}
+func getURLsFromHTML(htmlBody string, rawBaseURL *url.URL) ([]string, error) {
 
 	doc, err := html.Parse(strings.NewReader(htmlBody))
 	if err != nil {
@@ -32,7 +28,7 @@ func getURLsFromHTML(htmlBody, rawBaseURL string) ([]string, error) {
 						continue
 					}
 
-					urlresolved := base.ResolveReference(u).String()
+					urlresolved := rawBaseURL.ResolveReference(u).String()
 					links = append(links, urlresolved)
 					break
 				}

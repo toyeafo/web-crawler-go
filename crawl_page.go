@@ -3,13 +3,19 @@ package main
 import (
 	"fmt"
 	"log"
-	"strings"
+	"net/url"
 )
 
 func (cfg *config) crawlPage(rawCurrentURL string) {
 	defer cfg.wg.Done()
 
-	if !strings.HasPrefix(rawCurrentURL, cfg.baseURL.String()) {
+	parsedURL, err := url.Parse(rawCurrentURL)
+	if err != nil {
+		fmt.Printf("Error - crawlPage: couldn't parse URL '%s': %v\n", rawCurrentURL, err)
+		return
+	}
+
+	if parsedURL.Hostname() != cfg.baseURL.Hostname() {
 		return
 	}
 
@@ -32,7 +38,7 @@ func (cfg *config) crawlPage(rawCurrentURL string) {
 		return
 	}
 
-	urls, err := getURLsFromHTML(data, cfg.baseURL.String())
+	urls, err := getURLsFromHTML(data, cfg.baseURL)
 	if err != nil {
 		log.Printf("error reading urls from html: %v", err)
 		return
