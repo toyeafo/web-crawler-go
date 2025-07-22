@@ -43,14 +43,3 @@ func (cfg *config) crawlPage(rawCurrentURL string) {
 		go cfg.crawlPage(url)
 	}
 }
-
-func (cfg *config) addPageVisit(normalizedURL string) (isFirst bool) {
-	cfg.mu.Lock()
-	defer cfg.mu.Unlock()
-
-	if _, ok := cfg.pages[normalizedURL]; ok {
-		return false
-	}
-	cfg.pages[normalizedURL] = 1
-	return true
-}

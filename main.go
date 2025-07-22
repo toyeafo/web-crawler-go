@@ -3,19 +3,8 @@ package main
 import (
 	"errors"
 	"fmt"
-	"log"
-	"net/url"
 	"os"
-	"sync"
 )
-
-type config struct {
-	pages              map[string]int
-	baseURL            *url.URL
-	mu                 *sync.Mutex
-	concurrencyControl chan struct{}
-	wg                 *sync.WaitGroup
-}
 
 func main() {
 	args := os.Args
@@ -30,23 +19,15 @@ func main() {
 
 	rawBaseURL := args[1]
 
-	u, err := url.Parse(rawBaseURL)
+	const maxConcurrency = 3
+	cfg, err := configure(rawBaseURL, maxConcurrency)
 	if err != nil {
-		log.Fatalf("error parsing url: %v, error: %v", rawBaseURL, err)
-	}
-
-	maxConcurrency := 3
-
-	cfg := config{
-		pages:              make(map[string]int),
-		baseURL:            u,
-		concurrencyControl: make(chan struct{}, maxConcurrency),
-		mu:                 &sync.Mutex{},
-		wg:                 &sync.WaitGroup{},
+		fmt.Printf("Error configuring: %v", err)
+		return
 	}
 
 	cfg.wg.Add(1)
-	go cfg.crawlPage(cfg.baseURL.String())
+	go cfg.crawlPage(rawBaseURL)
 	cfg.wg.Wait()
 
 	for k, v := range cfg.pages {
